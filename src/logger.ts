@@ -40,9 +40,11 @@ export class WideLogger {
    * @param value
    */
   public add(key: LogKey, value: LogValue) {
-    if (this.logContainer[key]) {
-      console.warn(`Overwriting key '${key}'`, { old: this.logContainer[key], new: value });
-    }
+    /**
+     * If value is undefined this will be filtered out by formatters using JSON.stringify to encode
+     * values (e.g. KeyValueFormatter and JSONFormatter).  If undefined is passed in change it to null 
+     * so the meta-data is emitted with no value rather than excluded causing confusion.
+     */
     if (value === undefined) {
       value = null;
     }

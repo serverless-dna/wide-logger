@@ -1,8 +1,7 @@
 # Wide Logger
 
-
-A simple canonical wide logger that is built to gather key, value pairs and then flush them all to the console
-in a single log message.  This does not replace your existing detailed debug logging, its an addition.  All logs emitted by the Wide Logger will be prefixed by `WIDE` so you can quickly and easily find them or use filtered subscriptions to record these in a single place for easy searching and correlation.
+A canonical wide logger that is built to gather key, value pairs and then flush them all to the console
+in a single log message.  This does not replace your existing detailed debug logging, it is an addition.  All logs emitted by the Wide Logger will be prefixed by `WIDE` so you can quickly and easily find them or use filtered subscriptions to record these in a single place for easy searching and correlation.
 
 ## Usage
 
@@ -66,6 +65,13 @@ The **KeyValueFormatter** also accepts a seperator character in the constructor 
 ## Middy Middleware Usage
 
 We have also packaged a middleware class for [MiddyJs](https://github.com/middyjs/middy) users to simplify your WideLogging needs.
+
+The **after** middleware will automatically add the folllwoing meta-data key: `{ error: false, success: 1 }`
+The **onError** middleware will automatically add the following meta-data keys: `{ error: true, errorDetail: "<Error message>", success: 0}`.
+
+The addition of the `success` key enables you to query logs for transactions grouped by lambda function to find those that never succeeded by using a sum of the success meta-data.  The sum will either be 1 for a successful transaction, or 0 for a transaction which failed.  This is especially useful when you have automated recovery of failed lambda invocations.  if you find a sum of the success meta-data yields a count > 1 then you need to investigate idempotency within your solution as this would indicate a transaction being processed twice!
+
+
 
 ```typescript
 import middy from '@middy/core';

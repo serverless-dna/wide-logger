@@ -90,6 +90,11 @@ export class WideLoggerMiddleware implements MiddlewareObj {
     if (this.options?.injectLambdaContext) {
       this.injectLambdaContext(request.context);
     }
+
+    // add error meta-data of false to indicate no error
+    this.theLogger.add('error', false);
+    // add success meta-data with value of 1
+    this.theLogger.add('success', 1);
     this.theLogger.flush();
   }
 
@@ -98,6 +103,14 @@ export class WideLoggerMiddleware implements MiddlewareObj {
    * @param request
    */
   public onError(request: Request): void {
+    /**
+     * Add default error meta-data for the failure
+     */
+    this.theLogger.add('error', true);
+    this.theLogger.add('errorDetails', request.error?.message ?? null);
+
+    // add success meta-date with value of 0
+    this.theLogger.add('success', 0);
     this.theLogger.flush();
   }
 }

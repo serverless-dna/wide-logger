@@ -40,12 +40,4 @@ describe('testing WideLogger', () => {
     expect(logger.container).toEqual({});
   });
 
-  it('should warn when I overwrite a container key', () => {
-    const consoleWarnSpy = jest.spyOn(console, 'warn');
-    logger.add('key', 'value');
-    logger.add('key', 100);
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith('Overwriting key \'key\'', { old: 'value', new: 100 });
-  });
-
 });

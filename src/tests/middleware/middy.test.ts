@@ -37,12 +37,19 @@ describe('middy middleware', () => {
     throw new Error('lambda error');
   };
 
-  const eventOutput = `WIDE ${JSON.stringify({
+  const eventOutput = {
     service: lambdaTestEvent.name,
     startEpoch: 1709358407383,
     group: null,
     type: lambdaTestEvent.type,
-  })}`;
+  };
+
+  const getEventOutput = (success: boolean = true, error:boolean = false, extra: Object = {}) => {
+    const ok = success ? 1 : 0;
+    let output = Object.assign({}, eventOutput, { error }, extra, { success: ok });
+
+    return `WIDE ${JSON.stringify(output)}`;
+  };
 
   const handler = middy<MyEvent, void>()
     .use(middyMiddleware)
@@ -58,7 +65,7 @@ describe('middy middleware', () => {
     expect(xRayTraceData?.Root).toEqual('1-65e3369e-3d1b296f5b08533f7e899187');
   });
 
-  it('returns Middy Middelware with logger', () => {
+  it('returns Middy Middleware with logger', () => {
     const middleware = WideLoggerMiddy(wideLogger);
     expect(middleware).toBeInstanceOf(WideLoggerMiddleware);
     expect(middleware.logger).toBe(wideLogger);
@@ -69,7 +76,7 @@ describe('middy middleware', () => {
     await handler(lambdaTestEvent, lambdaTestContext);
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith(eventOutput);
+    expect(consoleLogSpy).toHaveBeenCalledWith(getEventOutput(true, false));
     expect(middlewareAfterSpy).toHaveBeenCalled();
   });
 
@@ -82,7 +89,7 @@ describe('middy middleware', () => {
     await expect(testHandler()).rejects.toThrow();
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith(eventOutput);
+    expect(consoleLogSpy).toHaveBeenCalledWith(getEventOutput(false, true, { errorDetails: 'lambda error' }));
     expect(middlewareErrorSpy).toHaveBeenCalled();
   });
 
@@ -95,7 +102,7 @@ describe('middy middleware', () => {
     await contextHandler(lambdaTestEvent, lambdaTestContext);
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000}}');
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000},\"error\":false,\"success\":1}');
     expect(middlewareContextErrorSpy).not.toHaveBeenCalled();
     expect(middlewareContextAfterSpy).toHaveBeenCalled();
   });
