@@ -39,15 +39,8 @@ export class WideLoggerMiddleware implements MiddlewareObj {
   constructor(logger: WideLogger, options?: WideLoggerMiddyOptions) {
     this.theLogger = logger;
     this.options = options ?? {};
-    this.before = this.before.bind(this);
     this.after = this.after.bind(this);
     this.onError = this.onError.bind(this);
-  }
-
-  public before(request: Request): void {
-    if (this.options?.injectLambdaContext) {
-      this.injectLambdaContext(request.context);
-    }
   }
 
   protected injectLambdaContext(context: LambdaContext) {
@@ -72,6 +65,9 @@ export class WideLoggerMiddleware implements MiddlewareObj {
    * @param requests
    */
   public after(request: Request): void {
+    if (this.options?.injectLambdaContext) {
+      this.injectLambdaContext(request.context);
+    }
     this.theLogger.flush();
   }
 

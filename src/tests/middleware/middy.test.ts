@@ -8,17 +8,14 @@ describe('middy middleware', () => {
   const middyMiddleware = WideLoggerMiddy(wideLogger);
   const middyContextMiddleware = WideLoggerMiddy(wideLogger, { injectLambdaContext: true });
 
-  const middlewareBeforeSpy = jest.spyOn(middyMiddleware, 'before');
   const middlewareAfterSpy = jest.spyOn(middyMiddleware, 'after');
   const middlewareErrorSpy = jest.spyOn(middyMiddleware, 'onError');
 
-  const middlewareContextBeforeSpy = jest.spyOn(middyContextMiddleware, 'before');
   const middlewareContextAfterSpy = jest.spyOn(middyContextMiddleware, 'after');
   const middlewareContextErrorSpy = jest.spyOn(middyContextMiddleware, 'onError');
 
   afterEach(() => {
     consoleLogSpy.mockClear();
-    middlewareBeforeSpy.mockClear();
     middlewareAfterSpy.mockClear();
     middlewareErrorSpy.mockClear();
   });
@@ -92,9 +89,8 @@ describe('middy middleware', () => {
     await contextHandler(lambdaTestEvent, lambdaTestContext);
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"oo1\"},\"remainingTimeInMillis\":1000},\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\"}');
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"oo1\"},\"remainingTimeInMillis\":1000}}');
     expect(middlewareContextErrorSpy).not.toHaveBeenCalled();
-    expect(middlewareContextBeforeSpy).toHaveBeenCalled();
     expect(middlewareContextAfterSpy).toHaveBeenCalled();
   });
 
