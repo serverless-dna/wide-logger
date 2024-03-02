@@ -1,0 +1,6 @@
+tests
+tsconfig*
+src
+jest.config.js
+.github
+.eslintrc.json
