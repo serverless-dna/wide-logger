@@ -1,7 +1,7 @@
 # Wide Logger
 
 A simple canonical wide logger that is built to gather key, value pairs and then flush them all to the console
-in a single log message.  This does not replace your existing detailed debug logging, its an addition.
+in a single log message.  This does not replace your existing detailed debug logging, its an addition.  All logs emitted by the Wide Logger will be prefixed by `WIDE` so you can quickly and easily find them or use filtered subscriptions to record these in a single place for easy searching and correlation.
 
 ## Usage
 
@@ -29,7 +29,7 @@ const serviceProcessor = async (data: Record<string, any>) => {
 ```
 
 The log output will be:
-`{"startEpoch":1709335919083,"premiumUser":true,"premiumGroup:"A"}`
+`WIDE {"startEpoch":1709335919083,"premiumUser":true,"premiumGroup:"A"}`
 
 When the Wide Logger is flushed it will do so using **console.log()** and will use the **LogFormatter** passed with a default of JSON (Object) output. 
 
@@ -58,7 +58,7 @@ const serviceProcessor = async (data: Record<string, any>) => {
 
 Using the KeyValueFormatter will output the following:
 
-`startEpoch=1709335919083|premiumUser=true|premiumGroup="A"`
+`WIDE startEpoch=1709335919083|premiumUser=true|premiumGroup="A"`
 
 The **KeyValueFormatter** also accepts a seperator character in the constructor so you can use your own custom seperator for your log ingestion engine with a default of '|'.
 
@@ -68,7 +68,7 @@ We have also packaged a middleware class for [MiddyJs](https://github.com/middyj
 
 ```typescript
 import middy from '@middy/core';
-import { WideLogger, WideLoggerMiddleware } from '@serverless-dna/wide-logger';
+import { WideLogger, WideLoggerMiddy } from '@serverless-dna/wide-logger';
 
 const wideLogger = new WideLogger()
 
@@ -80,7 +80,7 @@ const lambdaHandler = (event, context) => {
 }
 
 export const handler = middy()
-  .use(WideLoggerMiddleware(wideLogger))
+  .use(WideLoggerMiddy(wideLogger))
   .handler(lambdaHandler)
 ```
 
