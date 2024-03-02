@@ -1,6 +1,8 @@
-src/tests
+dist/tests
 tsconfig*
 src
 jest.config.js
 .github
 .eslintrc.json
+coverage
+.idea
