@@ -1,7 +1,7 @@
 {
   "name": "@serverless-dna/wide-logger",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "A Wide Canonical logger - logging singlular fat metrics for every transaction you process.",
   "main": "dist/src/index.js",
   "scripts": {
     "lint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src tests",
@@ -9,11 +9,9 @@
     "build": "tsc"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Michael Walmsley",
+  "license": "MIT",
   "devDependencies": {
-    "@swc/cli": "^0.3.10",
-    "@swc/core": "^1.4.2",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.22",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
@@ -23,7 +21,6 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
     "jest": "^29.7.0",
-    "lint-staged": "^15.2.2",
     "node-jest": "^0.2.0",
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
@@ -33,5 +30,17 @@
   "dependencies": {
     "@middy/core": "^4.7.0",
     "@types/aws-lambda": "^8.10.134"
-  }
+  },
+  "types": "./dist/src/index.d.ts",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serverless-dna/wide-logger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/serverless-dna/wide-logger/issues"
+  },
+  "homepage": "https://github.com/serverless-dna/wide-logger#readme"
 }
