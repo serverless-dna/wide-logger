@@ -1,8 +1,8 @@
 {
   "name": "@serverless-dna/wide-logger",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A Wide Canonical logger - logging singlular fat metrics for every transaction you process.",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "lint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src tests",
     "test": "jest --passWithNoTests tests",
@@ -32,7 +32,7 @@
     "@middy/core": "^4.7.0",
     "@types/aws-lambda": "^8.10.134"
   },
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "directories": {
     "test": "tests"
   },
