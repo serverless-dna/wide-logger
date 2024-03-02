@@ -1,6 +1,6 @@
 {
   "name": "@serverless-dna/wide-logger",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Wide Canonical logger - logging singlular fat metrics for every transaction you process.",
   "main": "dist/index.js",
   "scripts": {
