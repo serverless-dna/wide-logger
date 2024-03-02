@@ -1,18 +1,24 @@
 import middy from '@middy/core';
 import { lambdaTestContext, lambdaTestEvent, lambdaTestEventLogOutputJson, MyEvent } from './fixtures';
-import { WideLogger } from '../../src';
-import { WideLoggerMiddleware, WideLoggerMiddy } from '../../src/middleware';
+import { WideLogger, WideLoggerMiddleware, WideLoggerMiddy } from '../../index';
 
 describe('middy middleware', () => {
   const wideLogger = new WideLogger();
   const consoleLogSpy = jest.spyOn(console, 'log');
   const middyMiddleware = WideLoggerMiddy(wideLogger);
+  const middyContextMiddleware = WideLoggerMiddy(wideLogger, { injectLambdaContext: true });
 
+  const middlewareBeforeSpy = jest.spyOn(middyMiddleware, 'before');
   const middlewareAfterSpy = jest.spyOn(middyMiddleware, 'after');
   const middlewareErrorSpy = jest.spyOn(middyMiddleware, 'onError');
 
+  const middlewareContextBeforeSpy = jest.spyOn(middyContextMiddleware, 'before');
+  const middlewareContextAfterSpy = jest.spyOn(middyContextMiddleware, 'after');
+  const middlewareContextErrorSpy = jest.spyOn(middyContextMiddleware, 'onError');
+
   afterEach(() => {
     consoleLogSpy.mockClear();
+    middlewareBeforeSpy.mockClear();
     middlewareAfterSpy.mockClear();
     middlewareErrorSpy.mockClear();
   });
@@ -76,5 +82,21 @@ describe('middy middleware', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith(eventOutput);
     expect(middlewareErrorSpy).toHaveBeenCalled();
   });
+
+  const contextHandler = middy<MyEvent, void>()
+    .use(middyContextMiddleware)
+    .handler(lambdaHandler);
+
+  it('Middy will inject lambda context to logger when option provided', async () => {
+    // When I call the middy wrapped handler
+    await contextHandler(lambdaTestEvent, lambdaTestContext);
+
+    // Then I expect logging to happen in the after
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"oo1\"},\"remainingTimeInMillis\":1000},\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\"}');
+    expect(middlewareContextErrorSpy).not.toHaveBeenCalled();
+    expect(middlewareContextBeforeSpy).toHaveBeenCalled();
+    expect(middlewareContextAfterSpy).toHaveBeenCalled();
+  });
+
 });
 

@@ -1,6 +1,5 @@
 # Wide Logger
 
-[![codecov](https://codecov.io/gh/serverless-dna/wide-logger/graph/badge.svg?token=12TPWFA1E4)](https://codecov.io/gh/serverless-dna/wide-logger)
 
 A simple canonical wide logger that is built to gather key, value pairs and then flush them all to the console
 in a single log message.  This does not replace your existing detailed debug logging, its an addition.  All logs emitted by the Wide Logger will be prefixed by `WIDE` so you can quickly and easily find them or use filtered subscriptions to record these in a single place for easy searching and correlation.
@@ -83,6 +82,55 @@ const lambdaHandler = (event, context) => {
 
 export const handler = middy()
   .use(WideLoggerMiddy(wideLogger))
+  .handler(lambdaHandler)
+```
+
+### Injecting AWS Lambda Context
+
+You can optionally include relevant details from the AWS Lambda function context within each Wide log entry.  This will be added as a single key/object value pair.  The **KeyValueFormatter** uses JSON.stringify to format values, so if you use this formatter be aware that the lambda context is an encoded string value.
+
+The context injected has the following structure.
+
+```json
+{
+    "lambdaContext":
+    {
+        "lambdaFunction":
+        {
+            "arn": "arn:aws:lambda:us-east-1:123456789012:function:your-lambda-function",
+            "name": "your-lambda-function",
+            "memoryLimitInMB": "256",
+            "version": "$LATEST"
+        },
+        "awsAccountId": "123456789012",
+        "awsRegion": "us-east-1",
+        "correlationIds":
+        {
+            "awsRequestId": "017100a8-3d65-40bb-aae1-673367af29b3",
+            "xRayTraceId": "017100a8-3d65-40bb-aae1-673367af29b3"
+        },
+        "remainingTimeInMillis": 2999
+    }
+}
+```
+
+You can enable injecting the AWS Lmabda Context into your Wide log messages as shown here.
+
+```typescript
+import middy from '@middy/core';
+import { WideLogger, WideLoggerMiddy } from '@serverless-dna/wide-logger';
+
+const wideLogger = new WideLogger()
+
+const lambdaHandler = (event, context) => {
+    wideLogger.add('service', 'mySpecialService')
+    wideLogger.add('startEpoch', Date.now());
+  /* your business logic */
+
+}
+
+export const handler = middy()
+  .use(WideLoggerMiddy(wideLogger, { injectLambdaContext: true }))
   .handler(lambdaHandler)
 ```
 

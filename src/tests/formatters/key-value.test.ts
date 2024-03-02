@@ -1,6 +1,6 @@
 
-import { WideLogger } from '../../src/';
-import { KeyValueFormatter } from '../../src/formatters';
+import { KeyValueFormatter } from '../../formatters';
+import { WideLogger } from '../../index';
 
 
 describe('KeyValueFormatter', () => {

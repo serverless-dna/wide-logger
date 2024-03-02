@@ -1,5 +1,5 @@
-import { WideLogger } from '../../src/';
-import { JsonFormatter } from '../../src/formatters';
+import { JsonFormatter } from '../../formatters';
+import { WideLogger } from '../../index';
 
 it('should format the log container as a json stringified object', () => {
 

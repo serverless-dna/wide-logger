@@ -2,7 +2,7 @@ import { LogFormatter } from './formatters';
 import { JsonFormatter } from './formatters/json';
 
 export type LogKey = string;
-export type LogValue = string | number | boolean | null | undefined;
+export type LogValue = string | number | boolean | null | Object;
 export interface WideLogContainer {
   [key: string]: LogValue;
 }

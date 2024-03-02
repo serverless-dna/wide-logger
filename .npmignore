@@ -1,4 +1,4 @@
-tests
+src/tests
 tsconfig*
 src
 jest.config.js

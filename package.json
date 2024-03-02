@@ -4,8 +4,8 @@
   "description": "A Wide Canonical logger - logging singlular fat metrics for every transaction you process.",
   "main": "dist/index.js",
   "scripts": {
-    "lint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src tests",
-    "test": "jest --passWithNoTests tests",
+    "lint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src src/tests",
+    "test": "jest --passWithNoTests src/tests",
     "test:packages:unit": "npm run test",
     "build": "tsc"
   },
@@ -34,7 +34,7 @@
   },
   "types": "./dist/index.d.ts",
   "directories": {
-    "test": "tests"
+    "test": "src/tests"
   },
   "repository": {
     "type": "git",

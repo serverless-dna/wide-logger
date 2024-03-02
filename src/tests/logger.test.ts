@@ -1,5 +1,5 @@
-import { WideLogger } from '../src';
-import { JsonFormatter } from '../src/formatters';
+import { JsonFormatter } from '../formatters';
+import { WideLogger } from '../index';
 
 describe('testing WideLogger', () => {
   const logger = new WideLogger();

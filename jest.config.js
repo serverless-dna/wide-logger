@@ -1,6 +1,6 @@
 module.exports = {
     'collectCoverage': true,
-    'collectCoverageFrom': ['src/**/*'],
+    'collectCoverageFrom': ['src/**/*', '!src/tests/**/*'],
     'coverageDirectory': 'coverage',
     'coverageThreshold': {
         'global': {
@@ -11,7 +11,7 @@ module.exports = {
         }
     },
     'roots': [
-        '<rootDir>/tests'
+        '<rootDir>/src/tests'
     ],
     'transform': {
         '^.+\\.(t|j)sx?$': 'ts-jest'

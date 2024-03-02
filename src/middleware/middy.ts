@@ -12,6 +12,14 @@ export interface Request<TEvent = any, TResult = any, TErr = Error> {
   };
 }
 
+export interface WideLoggerMiddyOptions {
+  /**
+   * include AWS Lambda Context
+   * @default false
+   */
+  injectLambdaContext?: boolean;
+}
+
 export class WideLoggerMiddleware implements MiddlewareObj {
 
   /**
@@ -19,17 +27,46 @@ export class WideLoggerMiddleware implements MiddlewareObj {
    * @private
    */
   private readonly theLogger: WideLogger;
+  /**
+   * Middleware Options
+   */
+  private readonly options: WideLoggerMiddyOptions;
 
   get logger(): WideLogger {
     return this.theLogger;
   }
 
-  constructor(logger: WideLogger) {
+  constructor(logger: WideLogger, options?: WideLoggerMiddyOptions) {
     this.theLogger = logger;
+    this.options = options ?? {};
+    this.before = this.before.bind(this);
     this.after = this.after.bind(this);
     this.onError = this.onError.bind(this);
   }
 
+  public before(request: Request): void {
+    if (this.options?.injectLambdaContext) {
+      this.injectLambdaContext(request.context);
+    }
+  }
+
+  protected injectLambdaContext(context: LambdaContext) {
+    this.theLogger.add('lambdaContext', {
+      lambdaFunction: {
+        arn: context.invokedFunctionArn,
+        name: context.functionName,
+        memoryLimitInMB: context.memoryLimitInMB,
+        version: context.functionVersion,
+      },
+      awsAccountId: context.invokedFunctionArn.split(':')[4],
+      awsRegion: context.invokedFunctionArn.split(':')[3],
+      correlationIds: {
+        awsRequestId: context.awsRequestId,
+        xRayTraceId: context.awsRequestId,
+      },
+      remainingTimeInMillis: context.getRemainingTimeInMillis(),
+    });
+  }
   /**
    * Flush the WideLogEntry after the handler has finished
    * @param requests
@@ -52,6 +89,6 @@ export class WideLoggerMiddleware implements MiddlewareObj {
  * @param logger teh Wide Logger to manage
  * @returns Middy Middleware instance
  */
-export const WideLoggerMiddy = (logger: WideLogger) => {
-  return new WideLoggerMiddleware(logger);
+export const WideLoggerMiddy = (logger: WideLogger, options?: WideLoggerMiddyOptions) => {
+  return new WideLoggerMiddleware(logger, options);
 };

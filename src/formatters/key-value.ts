@@ -2,7 +2,7 @@
  * key=value Formatter for wide log format output
  */
 import { LogFormatter, LogFormat } from './base';
-import { WideLogContainer } from '../logger';
+import { LogValue, WideLogContainer } from '../logger';
 
 /*
  * key=value Formatter for wide log format output
@@ -18,6 +18,7 @@ export class KeyValueFormatter implements LogFormatter {
   constructor(separator?: string) {
     this.separator = separator ?? '|';
   }
+
   format(logContainer: WideLogContainer): LogFormat {
     return Object.keys(logContainer)
       .map(key => `${key}=${JSON.stringify(logContainer[key])}`)
