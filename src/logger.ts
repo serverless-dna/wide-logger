@@ -42,7 +42,7 @@ export class WideLogger {
   public add(key: LogKey, value: LogValue) {
     /**
      * If value is undefined this will be filtered out by formatters using JSON.stringify to encode
-     * values (e.g. KeyValueFormatter and JSONFormatter).  If undefined is passed in change it to null 
+     * values (e.g. KeyValueFormatter and JSONFormatter).  If undefined is passed in change it to null
      * so the meta-data is emitted with no value rather than excluded causing confusion.
      */
     if (value === undefined) {
