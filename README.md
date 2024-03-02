@@ -1,5 +1,7 @@
 # Wide Logger
 
+[![codecov](https://codecov.io/gh/serverless-dna/wide-logger/graph/badge.svg?token=12TPWFA1E4)](https://codecov.io/gh/serverless-dna/wide-logger)
+
 A simple canonical wide logger that is built to gather key, value pairs and then flush them all to the console
 in a single log message.  This does not replace your existing detailed debug logging, its an addition.  All logs emitted by the Wide Logger will be prefixed by `WIDE` so you can quickly and easily find them or use filtered subscriptions to record these in a single place for easy searching and correlation.
 
