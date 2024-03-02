@@ -3,6 +3,7 @@ import { lambdaTestContext, lambdaTestEvent, lambdaTestEventLogOutputJson, MyEve
 import { WideLogger, WideLoggerMiddleware, WideLoggerMiddy } from '../../index';
 
 describe('middy middleware', () => {
+  process.env._X_AMZN_TRACE_ID = 'Root=1-65e3369e-3d1b296f5b08533f7e899187;Parent=45cac5110a610bc4;Sampled=0;Lineage=0439e26f:0';
   const wideLogger = new WideLogger();
   const consoleLogSpy = jest.spyOn(console, 'log');
   const middyMiddleware = WideLoggerMiddy(wideLogger);
@@ -51,6 +52,11 @@ describe('middy middleware', () => {
     .use(middyMiddleware)
     .handler(errorLambdaHandler);
 
+  it('extracts the xRay Trace form environment variable', () => {
+    const xRayTraceData = middyMiddleware.getXrayTraceData();
+
+    expect(xRayTraceData?.Root).toEqual('1-65e3369e-3d1b296f5b08533f7e899187');
+  });
 
   it('returns Middy Middelware with logger', () => {
     const middleware = WideLoggerMiddy(wideLogger);
@@ -89,7 +95,7 @@ describe('middy middleware', () => {
     await contextHandler(lambdaTestEvent, lambdaTestContext);
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"oo1\"},\"remainingTimeInMillis\":1000}}');
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000}}');
     expect(middlewareContextErrorSpy).not.toHaveBeenCalled();
     expect(middlewareContextAfterSpy).toHaveBeenCalled();
   });

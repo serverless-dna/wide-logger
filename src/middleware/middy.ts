@@ -22,6 +22,7 @@ export interface WideLoggerMiddyOptions {
 
 export class WideLoggerMiddleware implements MiddlewareObj {
 
+  private xRayTraceIdVariable = '_X_AMZN_TRACE_ID';
   /**
    * WideLogger instance to be managed by the Middelware.
    * @private
@@ -43,7 +44,28 @@ export class WideLoggerMiddleware implements MiddlewareObj {
     this.onError = this.onError.bind(this);
   }
 
+  /**
+   * extract the xRayTraceId from the environment
+   */
+  public getXrayTraceData(): Record<string, string> | undefined {
+    const traceEnvData = process.env[this.xRayTraceIdVariable]?.trim() || '';
+    if (traceEnvData === '') return undefined;
+
+    if (!traceEnvData.includes('=')) return { Root: traceEnvData };
+
+    const xRayTraceData: Record<string, string> = {};
+
+    traceEnvData.split(';').forEach((field) => {
+      const [key, value] = field.split('=');
+
+      xRayTraceData[key] = value;
+    });
+
+    return xRayTraceData;
+  }
+
   protected injectLambdaContext(context: LambdaContext) {
+    const xRayTraceData = this.getXrayTraceData();
     this.theLogger.add('lambdaContext', {
       lambdaFunction: {
         arn: context.invokedFunctionArn,
@@ -55,7 +77,7 @@ export class WideLoggerMiddleware implements MiddlewareObj {
       awsRegion: context.invokedFunctionArn.split(':')[3],
       correlationIds: {
         awsRequestId: context.awsRequestId,
-        xRayTraceId: context.awsRequestId,
+        xRayTraceId: xRayTraceData?.Root ?? null,
       },
       remainingTimeInMillis: context.getRemainingTimeInMillis(),
     });
