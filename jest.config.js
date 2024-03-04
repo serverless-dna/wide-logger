@@ -14,7 +14,7 @@ module.exports = {
         '<rootDir>/src/tests'
     ],
     'transform': {
-        '^.+\\.(t|j)sx?$': 'ts-jest'
+        '^.+\\.(js|jsx|ts|tsx)$': 'ts-jest'
     },
     'testRegex': '.*(test|spec)\\.(t|j)sx?$',
     'moduleFileExtensions': [

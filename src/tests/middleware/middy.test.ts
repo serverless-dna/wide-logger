@@ -1,6 +1,6 @@
 import middy from '@middy/core';
 import { lambdaTestContext, lambdaTestEvent, lambdaTestEventLogOutputJson, MyEvent } from './fixtures';
-import { WideLogger, WideLoggerMiddleware, WideLoggerMiddy } from '../../index';
+import { WideLogger, WideLoggerMiddleware, WideLoggerMiddy, getXrayTraceData } from '../../index';
 
 describe('middy middleware', () => {
   process.env._X_AMZN_TRACE_ID = 'Root=1-65e3369e-3d1b296f5b08533f7e899187;Parent=45cac5110a610bc4;Sampled=0;Lineage=0439e26f:0';
@@ -19,6 +19,8 @@ describe('middy middleware', () => {
     consoleLogSpy.mockClear();
     middlewareAfterSpy.mockClear();
     middlewareErrorSpy.mockClear();
+    middlewareContextAfterSpy.mockClear();
+    middlewareContextErrorSpy.mockClear();
   });
 
   const lambdaHandler = (event: MyEvent) => {
@@ -45,10 +47,7 @@ describe('middy middleware', () => {
   };
 
   const getEventOutput = (success: boolean = true, error:boolean = false, extra: Object = {}) => {
-    const ok = success ? 1 : 0;
-    let output = Object.assign({}, eventOutput, { error }, extra, { success: ok });
-
-    return `WIDE ${JSON.stringify(output)}`;
+    return `WIDE ${JSON.stringify(eventOutput)}`;
   };
 
   const handler = middy<MyEvent, void>()
@@ -60,7 +59,7 @@ describe('middy middleware', () => {
     .handler(errorLambdaHandler);
 
   it('extracts the xRay Trace form environment variable', () => {
-    const xRayTraceData = middyMiddleware.getXrayTraceData();
+    const xRayTraceData = getXrayTraceData();
 
     expect(xRayTraceData?.Root).toEqual('1-65e3369e-3d1b296f5b08533f7e899187');
   });
@@ -97,14 +96,30 @@ describe('middy middleware', () => {
     .use(middyContextMiddleware)
     .handler(lambdaHandler);
 
-  it('Middy will inject lambda context to logger when option provided', async () => {
+  const contextErrorHandler = middy<MyEvent, void>()
+    .use(middyContextMiddleware)
+    .handler(errorLambdaHandler);
+
+  it('Middy will inject lambda context to logger when option provided from after hook', async () => {
     // When I call the middy wrapped handler
     await contextHandler(lambdaTestEvent, lambdaTestContext);
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000},\"error\":false,\"success\":1}');
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000}}');
     expect(middlewareContextErrorSpy).not.toHaveBeenCalled();
     expect(middlewareContextAfterSpy).toHaveBeenCalled();
+  });
+
+  it('Middy will inject lambda context to logger when option provided from onError Hook', async () => {
+    const testHandler = async () => {
+      await contextErrorHandler(lambdaTestEvent, lambdaTestContext);
+    };
+    await expect(testHandler()).rejects.toThrow();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"service\":\"thing\",\"startEpoch\":1709358407383,\"group\":null,\"type\":\"test\",\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000}}');
+    // expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {\"lambdaContext\":{\"lambdaFunction\":{\"arn\":\"arn:aws:lambda:us-east-1:123456789012:function:a-lambda-function\",\"name\":\"func\",\"memoryLimitInMB\":\"100\",\"version\":\"1\"},\"awsAccountId\":\"123456789012\",\"awsRegion\":\"us-east-1\",\"correlationIds\":{\"awsRequestId\":\"oo1\",\"xRayTraceId\":\"1-65e3369e-3d1b296f5b08533f7e899187\"},\"remainingTimeInMillis\":1000}}');
+    expect(middlewareContextErrorSpy).toHaveBeenCalled();
+    expect(middlewareContextAfterSpy).not.toHaveBeenCalled();
   });
 
 });

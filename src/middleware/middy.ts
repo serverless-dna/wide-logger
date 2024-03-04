@@ -2,6 +2,8 @@ import { MiddlewareObj } from '@middy/core';
 import { Context as LambdaContext } from 'aws-lambda';
 import { WideLogger } from '../logger';
 
+const xRayTraceIdVariable = '_X_AMZN_TRACE_ID';
+
 export interface Request<TEvent = any, TResult = any, TErr = Error> {
   event: TEvent;
   context: LambdaContext;
@@ -20,11 +22,54 @@ export interface WideLoggerMiddyOptions {
   injectLambdaContext?: boolean;
 }
 
+/**
+   * extract the xRayTraceId from the environment
+   */
+export const getXrayTraceData = (): Record<string, string> | undefined => {
+  const traceEnvData = process.env[xRayTraceIdVariable]?.trim() || '';
+  if (traceEnvData === '') return undefined;
+
+  if (!traceEnvData.includes('=')) return { Root: traceEnvData };
+
+  const xRayTraceData: Record<string, string> = {};
+
+  traceEnvData.split(';').forEach((field) => {
+    const [key, value] = field.split('=');
+
+    xRayTraceData[key] = value;
+  });
+
+  return xRayTraceData;
+};
+
+export const extractLambdaContext = (context: LambdaContext, remainingTime: boolean = false): Record<string, string|Object> => {
+  const xRayTraceData = getXrayTraceData();
+  const data: Record<string, string|Object> = {
+    lambdaFunction: {
+      arn: context.invokedFunctionArn,
+      name: context.functionName,
+      memoryLimitInMB: context.memoryLimitInMB,
+      version: context.functionVersion,
+    },
+    awsAccountId: context.invokedFunctionArn.split(':')[4],
+    awsRegion: context.invokedFunctionArn.split(':')[3],
+    correlationIds: {
+      awsRequestId: context.awsRequestId,
+      xRayTraceId: xRayTraceData?.Root ?? null,
+    },
+  };
+
+  if ( remainingTime ) {
+    data.remainingTimeInMillis = context.getRemainingTimeInMillis();
+  }
+
+  return data;
+};
+
 export class WideLoggerMiddleware implements MiddlewareObj {
 
-  private xRayTraceIdVariable = '_X_AMZN_TRACE_ID';
   /**
-   * WideLogger instance to be managed by the Middelware.
+   * WideLogger instance to be managed by the Middleware.
    * @private
    */
   private readonly theLogger: WideLogger;
@@ -44,57 +89,18 @@ export class WideLoggerMiddleware implements MiddlewareObj {
     this.onError = this.onError.bind(this);
   }
 
-  /**
-   * extract the xRayTraceId from the environment
-   */
-  public getXrayTraceData(): Record<string, string> | undefined {
-    const traceEnvData = process.env[this.xRayTraceIdVariable]?.trim() || '';
-    if (traceEnvData === '') return undefined;
-
-    if (!traceEnvData.includes('=')) return { Root: traceEnvData };
-
-    const xRayTraceData: Record<string, string> = {};
-
-    traceEnvData.split(';').forEach((field) => {
-      const [key, value] = field.split('=');
-
-      xRayTraceData[key] = value;
-    });
-
-    return xRayTraceData;
-  }
-
   protected injectLambdaContext(context: LambdaContext) {
-    const xRayTraceData = this.getXrayTraceData();
-    this.theLogger.add('lambdaContext', {
-      lambdaFunction: {
-        arn: context.invokedFunctionArn,
-        name: context.functionName,
-        memoryLimitInMB: context.memoryLimitInMB,
-        version: context.functionVersion,
-      },
-      awsAccountId: context.invokedFunctionArn.split(':')[4],
-      awsRegion: context.invokedFunctionArn.split(':')[3],
-      correlationIds: {
-        awsRequestId: context.awsRequestId,
-        xRayTraceId: xRayTraceData?.Root ?? null,
-      },
-      remainingTimeInMillis: context.getRemainingTimeInMillis(),
-    });
+    this.theLogger.add('lambdaContext', extractLambdaContext(context, true));
   }
   /**
    * Flush the WideLogEntry after the handler has finished
-   * @param requests
+   * @param request
    */
   public after(request: Request): void {
     if (this.options?.injectLambdaContext) {
       this.injectLambdaContext(request.context);
     }
 
-    // add error meta-data of false to indicate no error
-    this.theLogger.add('error', false);
-    // add success meta-data with value of 1
-    this.theLogger.add('success', 1);
     this.theLogger.flush();
   }
 
@@ -103,14 +109,10 @@ export class WideLoggerMiddleware implements MiddlewareObj {
    * @param request
    */
   public onError(request: Request): void {
-    /**
-     * Add default error meta-data for the failure
-     */
-    this.theLogger.add('error', true);
-    this.theLogger.add('errorDetails', request.error?.message ?? null);
+    if (this.options?.injectLambdaContext) {
+      this.injectLambdaContext(request.context);
+    }
 
-    // add success meta-date with value of 0
-    this.theLogger.add('success', 0);
     this.theLogger.flush();
   }
 }
@@ -118,6 +120,7 @@ export class WideLoggerMiddleware implements MiddlewareObj {
 /**
  * Create Middy Middleware to manage the WideLogger.
  * @param logger teh Wide Logger to manage
+ * @param options Middleware Options.  See WideLoggerMiddyOptions for details.
  * @returns Middy Middleware instance
  */
 export const WideLoggerMiddy = (logger: WideLogger, options?: WideLoggerMiddyOptions) => {

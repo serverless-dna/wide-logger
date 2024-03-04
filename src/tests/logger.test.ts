@@ -17,27 +17,34 @@ describe('testing WideLogger', () => {
   it('should add key/value to container', () => {
     logger.add('key', 'value');
     logger.add('key2', 'value2');
-    expect(logger.container).toEqual({ key: 'value', key2: 'value2' });
+    logger.flush();
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {"key":"value","key2":"value2"}');
   });
 
   it('should remove the key from the container', () => {
+    logger.add('key', 'value');
+    logger.add('key2', 'value2');
     logger.remove('key');
-    expect(logger.container).toEqual({ key2: 'value2' });
+    logger.flush();
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {"key2":"value2"}');
   });
 
   it('should clear the container', () => {
+    logger.add('key', 'value');
+    logger.add('key2', 'value2');
     logger.clear();
-    expect(logger.container).toEqual({});
+    logger.flush();
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {}');
   });
 
   it('should print out to console the log container', () => {
     logger.add('key', 'value');
     logger.add('key2', 'value2');
-
-
     logger.flush();
+
     expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {"key":"value","key2":"value2"}');
-    expect(logger.container).toEqual({});
+    logger.flush();
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {}');
   });
 
 });

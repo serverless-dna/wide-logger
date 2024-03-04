@@ -1,11 +1,12 @@
-import { LogFormatter } from './formatters';
-import { JsonFormatter } from './formatters/json';
+import { LogFormatter, JsonFormatter } from './formatters';
 
 export type LogKey = string;
 export type LogValue = string | number | boolean | null | Object;
 export interface WideLogContainer {
   [key: string]: LogValue;
 }
+
+export interface WideLogOptions {}
 
 /**
  * Manages a Canonical Wide log container of key/value pairs.
@@ -17,18 +18,34 @@ export class WideLogger {
    * @private
    */
   private logContainer: WideLogContainer;
+
   /**
    * The log formatter to format the output when flushed via console.log()
    * @default json
    * @private
    */
-  private logFormatter: LogFormatter;
+  private readonly logFormatter: LogFormatter;
 
-  constructor(formatter?: LogFormatter) {
+  /**
+   * Wide Log Options
+   * @private
+   */
+
+  private readonly options: WideLogOptions;
+  /**
+   * Create a new WideLogger instance.
+   * @param formatter
+   * @param options
+   */
+  constructor(formatter?: LogFormatter, options: WideLogOptions = {}) {
     this.logContainer = {};
+    this.options = options;
     this.logFormatter = formatter || new JsonFormatter();
   }
 
+  /**
+   * Flush the logContainer to the console.log() using the logFormatter.
+   */
   public flush() {
     console.log('WIDE ' + this.logFormatter.format(this.logContainer));
     this.clear();
@@ -67,14 +84,6 @@ export class WideLogger {
   }
 
   /**
-   * return the log container
-   * @returns WideLogContainer
-   */
-  get container(): WideLogContainer {
-    return this.logContainer;
-  }
-
-  /**
    * return the log formatter
    * @returns LogFormatter
    */
@@ -82,4 +91,3 @@ export class WideLogger {
     return this.logFormatter;
   }
 }
-
