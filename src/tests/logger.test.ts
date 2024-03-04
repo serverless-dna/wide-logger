@@ -3,7 +3,6 @@ import { WideLogger } from '../index';
 
 describe('testing WideLogger', () => {
   const logger = new WideLogger();
-  const formatter = new JsonFormatter();
   const consoleLogSpy = jest.spyOn(console, 'log');
 
   afterEach(() => {

@@ -1,5 +1,5 @@
 import middy from '@middy/core';
-import { lambdaTestContext, lambdaTestEvent, lambdaTestEventLogOutputJson, MyEvent } from './fixtures';
+import { lambdaTestContext, lambdaTestEvent, MyEvent } from './fixtures';
 import { WideLogger, WideLoggerMiddleware, WideLoggerMiddy, getXrayTraceData } from '../../index';
 
 describe('middy middleware', () => {
@@ -46,7 +46,8 @@ describe('middy middleware', () => {
     type: lambdaTestEvent.type,
   };
 
-  const getEventOutput = (success: boolean = true, error:boolean = false, extra: Object = {}) => {
+  // const getEventOutput = (success: boolean = true, error:boolean = false, extra: Object = {}) => {
+  const getEventOutput = () => {
     return `WIDE ${JSON.stringify(eventOutput)}`;
   };
 
@@ -75,7 +76,7 @@ describe('middy middleware', () => {
     await handler(lambdaTestEvent, lambdaTestContext);
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith(getEventOutput(true, false));
+    expect(consoleLogSpy).toHaveBeenCalledWith(getEventOutput());
     expect(middlewareAfterSpy).toHaveBeenCalled();
   });
 
@@ -88,7 +89,7 @@ describe('middy middleware', () => {
     await expect(testHandler()).rejects.toThrow();
 
     // Then I expect logging to happen in the after
-    expect(consoleLogSpy).toHaveBeenCalledWith(getEventOutput(false, true, { errorDetails: 'lambda error' }));
+    expect(consoleLogSpy).toHaveBeenCalledWith(getEventOutput());
     expect(middlewareErrorSpy).toHaveBeenCalled();
   });
 
