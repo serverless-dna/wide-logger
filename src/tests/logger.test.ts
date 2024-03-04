@@ -46,4 +46,36 @@ describe('testing WideLogger', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {}');
   });
 
+  it('should include persistent attributes added to the container at construction time', () => {
+    const extraLogger = new WideLogger({
+      persistentAttributes: {
+        myKey: 'myValue',
+        complexKey: {
+          key: 'value',
+        },
+      },
+    });
+
+    extraLogger.add('singleKey', 'single value');
+    extraLogger.flush();
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {"myKey":"myValue","complexKey":{"key":"value"},"singleKey":"single value"}');
+    consoleLogSpy.mockClear();
+    extraLogger.flush();
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {"myKey":"myValue","complexKey":{"key":"value"}}');
+  });
+
+  it('should allow adding of complex object via addObject', () => {
+    logger.add('key', 'value');
+    logger.add('key2', 'value2');
+    logger.addObject({
+      key3: 'value3',
+      complex: {
+        complexKey: 'complexValue',
+      },
+    });
+    logger.flush();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('WIDE {"key":"value","key2":"value2","key3":"value3","complex":{"complexKey":"complexValue"}}');
+  });
+
 });

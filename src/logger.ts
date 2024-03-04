@@ -6,7 +6,10 @@ export interface WideLogContainer {
   [key: string]: LogValue;
 }
 
-export interface WideLogOptions {}
+export interface WideLogOptions {
+  formatter?: LogFormatter;
+  persistentAttributes?: WideLogContainer;
+}
 
 /**
  * Manages a Canonical Wide log container of key/value pairs.
@@ -20,6 +23,12 @@ export class WideLogger {
   private logContainer: WideLogContainer;
 
   /**
+   * The container of key/value pairs that are persisted across flushes.
+   * @private
+   */
+  private persistentAttributes: WideLogContainer;
+
+  /**
    * The log formatter to format the output when flushed via console.log()
    * @default json
    * @private
@@ -30,17 +39,20 @@ export class WideLogger {
    * Wide Log Options
    * @private
    */
-
   private readonly options: WideLogOptions;
+
   /**
    * Create a new WideLogger instance.
-   * @param formatter
    * @param options
    */
-  constructor(formatter?: LogFormatter, options: WideLogOptions = {}) {
+  constructor(options: WideLogOptions = {}) {
     this.logContainer = {};
     this.options = options;
-    this.logFormatter = formatter || new JsonFormatter();
+    this.persistentAttributes = options.persistentAttributes ?? {};
+    this.logFormatter = options.formatter ?? new JsonFormatter();
+
+    // Call clear to initialise the container
+    this.clear();
   }
 
   /**
@@ -69,6 +81,14 @@ export class WideLogger {
   }
 
   /**
+   * Add an object to the logContainer.  This will merge the object with the existing logContainer.
+   * @param obj
+   */
+  public addObject(obj: Object) {
+    this.logContainer = Object.assign({}, this.logContainer, obj);
+  }
+
+  /**
    * Remove a key from the logContainer.
    * @param key
    */
@@ -80,7 +100,7 @@ export class WideLogger {
    * Clear the logContainer.
    */
   public clear() {
-    this.logContainer = {};
+    this.logContainer = Object.assign({}, this.persistentAttributes);
   }
 
   /**

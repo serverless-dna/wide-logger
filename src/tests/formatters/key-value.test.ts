@@ -5,7 +5,7 @@ import { WideLogger } from '../../index';
 
 describe('KeyValueFormatter', () => {
   const formatter = new KeyValueFormatter();
-  const logger = new WideLogger(formatter);
+  const logger = new WideLogger({ formatter });
   const consoleLogSpy = jest.spyOn(console, 'log');
 
   afterEach(() => {
